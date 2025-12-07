@@ -1,0 +1,34 @@
+curl -X POST "http://localhost:8000/synthesize" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hey, this is my chatterbox clone talking from Firebase!",
+    "reference_url": "https://firebasestorage.googleapis.com/v0/b/your-bucket/o/your-voice-file.wav?alt=media",
+    "exaggeration": 0.5
+  }' \
+  --output tts_output.wav
+
+
+ssh-keygen -t rsa -b 4096 -m PEM -f runpod.pem -C "runpod"
+theeseus@45da42b6a1bb:~$ ls /root/miniconda3
+ls ~/miniconda3
+ls ~/anaconda3
+ls: cannot access '/root/miniconda3': Permission denied
+LICENSE.txt  compiler_compat  envs     lib      pkgs   ssl
+_conda       conda-meta       etc      libexec  share  uninstall.sh
+bin          condabin         include  man      shell  x86_64-conda-linux-gnu
+ls: cannot access '/home/theeseus/anaconda3': No such file or directory
+theeseus@45da42b6a1bb:~$ 
+
+
+export PATH="$HOME/miniconda3/bin:$PATH"
+conda --version
+echo 'export PATH="$HOME/miniconda3/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+
+uvicorn api_server:app --host 0.0.0.0 --port 8000
+
+pkill -9 python
+pkill -9 uvicorn
+pkill -9 gunicorn
+pip install librosa soundfile numpy scipy
