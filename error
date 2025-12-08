@@ -1,68 +1,62 @@
-curl -X POST "http://38.147.83.31:8000/synthesize" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Hey, this is my chatterbox clone talking from Firebase!",
-    "reference_url": "https://firebasestorage.googleapis.com/v0/b/the-course-of-the-future.firebasestorage.app/o/clones%2Foutput_merged.mp3?alt=media&token=7c2955a1-4de4-410a-8a18-39b0c8214fe7",
-    "exaggeration": 0.5
-  }' \
-  --output output.wav
-ssh -L 8000:localhost:8000 theeseus@38.147.83.31
-
-
-theesues@theesues-VirtualBox:~$ curl --location 'https://jf0gnpob9toua4-8000.proxy.runpod.net/synthesize' \
---header 'Content-Type: application/json' \
---data '{
-    "text": "Hey, this is my chatterbox clone talking from Firebase!",
-    "reference_url": "https://firebasestorage.googleapis.com/v0/b/the-course-of-the-future.firebasestorage.app/o/clones%2Foutput_merged.mp3?alt=media&token=7c2955a1-4de4-410a-8a18-39b0c8214fe7",
-    "exaggeration": 0.5
-  }'
-theesues@theesues-VirtualBox:~$ 
-
-
-curl -v "https://jf0gnpob9toua4-8000.proxy.runpod.net/health"
-curl -v "https://jf0gnpob9toua4-8000.proxy.runpod.net/health"
-*   Trying 2606:4700::6812:6e4:443...
-* Connected to jf0gnpob9toua4-8000.proxy.runpod.net (2606:4700::6812:6e4) port 443 (#0)
-* ALPN, offering h2
-* ALPN, offering http/1.1
-*  CAfile: /etc/ssl/certs/ca-certificates.crt
-*  CApath: /etc/ssl/certs
-* TLSv1.0 (OUT), TLS header, Certificate Status (22):
-* TLSv1.3 (OUT), TLS handshake, Client hello (1):
-* TLSv1.2 (IN), TLS header, Certificate Status (22):
-* TLSv1.3 (IN), TLS handshake, Server hello (2):
-* TLSv1.2 (IN), TLS header, Finished (20):
-* TLSv1.2 (IN), TLS header, Supplemental data (23):
-    module = importlib.import_module(module_str)
-  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "/root/chatterbox/api_server.py", line 33, in <module>
-    tts = ChatterboxTTS.from_pretrained(device=device)
-  File "/root/chatterbox/src/chatterbox/tts.py", line 178, in from_pretrained
-    local_path = hf_hub_download(repo_id=REPO_ID, filename=fpath)
-  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
-    return fn(*args, **kwargs)
-  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1007, in hf_hub_download
-    return _hf_hub_download_to_cache_dir(
-  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1168, in _hf_hub_download_to_cache_dir
-    _download_to_tmp_and_move(
-  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 1735, in _download_to_tmp_and_move
-    http_get(
-  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/huggingface_hub/file_download.py", line 401, in http_get
-    raise ValueError(
-ValueError: Fast download using 'hf_transfer' is enabled (HF_HUB_ENABLE_HF_TRANSFER=1) but 'hf_transfer' package is not available in your environment. Try `pip install hf_transfer`.
-(chatterbox-env) root@7164169fd848:~/chatterbox# pip install pip install hf_transfer
-Requirement already satisfied: pip in /root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages (25.3)
-ERROR: Could not find a version that satisfies the requirement install (from versions: none)
 
 
 source /root/miniconda3/envs/chatterbox-env/bin/activate  # if not already
 cd ~/chatterbox
 
 pip install hf_transfer
+
+
+
+
+
+need to figure out network storage issue 
+
+Editing a running pod will cause it to reset.
+You will lose all data that isn't stored in your volume mount path (/workspace)
+
+Container image
+This can be a public image from Docker Hub or a private image from your own registry.
+
+runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
+Container disk
+Temporary disk space for the container
+
+30
+Volume disk
+Persistent disk space mounted to the container
+
+50
+Volume mount path
+
+/workspace
+Expose HTTP ports (max 10)
+8888,8000
+Expose TCP ports
+22
+
+
+
+cd /workspace
+
+# clone your repo here
+git clone https://github.com/you/chatterbox-api.git
+cd chatterbox-api
+
+# install conda here too (or use venv)
+mkdir -p /workspace/tools
+cd /workspace/tools
+# install Miniconda to /workspace/miniconda3 instead of /root/miniconda3
+bash Miniconda3-latest-Linux-x86_64.sh -b -p /workspace/miniconda3
+
+# then use that conda
+/source /workspace/miniconda3/bin/activate
+conda create -n chatterbox-env python=3.10
+conda activate chatterbox-env
+
+
+
+
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm ~/miniconda3/miniconda.sh

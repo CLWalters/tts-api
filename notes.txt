@@ -32,3 +32,7 @@ pkill -9 python
 pkill -9 uvicorn
 pkill -9 gunicorn
 pip install librosa soundfile numpy scipy
+
+
+
+export PATH="/workspace/miniconda3/bin:$PATH"
