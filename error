@@ -60,3 +60,177 @@ mkdir -p ~/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
 bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
 rm ~/miniconda3/miniconda.sh
+
+
+
+
+root@47a05e8ca4ac:/workspace# conda activate chatterbox-env
+
+CondaError: Run 'conda init' before 'conda activate'
+
+root@47a05e8ca4ac:/workspace# conda init
+no change     /root/miniconda3/condabin/conda
+no change     /root/miniconda3/bin/conda
+no change     /root/miniconda3/bin/conda-env
+no change     /root/miniconda3/bin/activate
+no change     /root/miniconda3/bin/deactivate
+no change     /root/miniconda3/etc/profile.d/conda.sh
+no change     /root/miniconda3/etc/fish/conf.d/conda.fish
+no change     /root/miniconda3/shell/condabin/Conda.psm1
+no change     /root/miniconda3/shell/condabin/conda-hook.ps1
+no change     /root/miniconda3/lib/python3.13/site-packages/xontrib/conda.xsh
+no change     /root/miniconda3/etc/profile.d/conda.csh
+no change     /root/.bashrc
+No action taken.
+root@47a05e8ca4ac:/workspace# 
+
+
+# Option A (recommended): load conda into this shell right now
+source /root/miniconda3/etc/profile.d/conda.sh
+conda activate chatterbox-env
+
+
+[*] Using device: cuda
+[*] Loading ChatterboxTTS model...
+tokenizer.json: 25.5kB [00:00, 59.3MB/s]
+conds.pt: 100%|███████████████████████████████| 107k/107k [00:00<00:00, 141kB/s]
+/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/torch/cuda/__init__.py:230: UserWarning: 
+NVIDIA RTX PRO 6000 Blackwell Server Edition with CUDA capability sm_120 is not compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_50 sm_60 sm_70 sm_75 sm_80 sm_86 sm_90.
+If you want to use the NVIDIA RTX PRO 6000 Blackwell Server Edition GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+
+  warnings.warn(
+Traceback (most recent call last):
+  File "/workspace/chatterbox/api_server.py", line 46, in <module>
+    tts = ChatterboxTTS.from_pretrained(device=device)
+  File "/workspace/chatterbox/src/chatterbox/tts.py", line 180, in from_pretrained
+    return cls.from_local(Path(local_path).parent, device)
+  File "/workspace/chatterbox/src/chatterbox/tts.py", line 142, in from_local
+    ve.to(device).eval()
+  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1174, in to
+    return self._apply(convert)
+  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 780, in _apply
+    module._apply(fn)
+  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 228, in _apply
+    self._init_flat_weights()
+  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 163, in _init_flat_weights
+    self.flatten_parameters()
+  File "/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/torch/nn/modules/rnn.py", line 215, in flatten_parameters
+    torch._cudnn_rnn_flatten_weight(
+RuntimeError: CUDA error: no kernel image is available for execution on the device
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Steps (inside chatterbox-env)
+
+Check what you have:
+
+python -c "import torch; print(torch.__version__); print(torch.version.cuda); print(torch.cuda.is_available())"
+nvidia-smi
+
+
+Remove current torch:
+
+pip uninstall -y torch torchvision torchaudio
+
+
+Install a nightly PyTorch CUDA build (most likely to include sm_120 support):
+
+pip install --pre --index-url https://download.pytorch.org/whl/nightly/cu124 torch torchvision torchaudio
+
+
+Then verify:
+
+python -c "import torch; print(torch.__version__); print(torch.cuda.get_device_name(0)); print(torch.cuda.get_device_capability(0))"
+
+
+If capability prints something like (12, 0) and no warnings, you’re good.
+
+
+
+ root@47a05e8ca4ac:/workspace/chatterbox# python -c "import torch; print(torch.__version__); print(torch.version.cuda); print(torch.cuda.is_available())"
+nvidia-smi
+2.4.0+cu121
+12.1
+True
+Mon Dec 15 09:51:03 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.195.03             Driver Version: 570.195.03     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 6000 Blac...    On  |   00000000:06:00.0 Off |                    0 |
+| N/A   27C    P8             33W /  600W |       0MiB /  97887MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++--------------------------------------------------------------
+
+
+
+Run this in your chatterbox-env:
+
+pip uninstall -y torch torchvision torchaudio
+pip cache purge
+
+# Install PyTorch 2.7 CUDA 12.8 wheels
+pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu128 \
+  torch==2.7.0+cu128 torchvision==0.22.0+cu128 torchaudio==2.7.0+cu128
+
+
+Verify:
+
+python - <<'PY'
+import torch
+print("torch:", torch.__version__)
+print("cuda:", torch.version.cuda)
+print("available:", torch.cuda.is_available())
+print("gpu:", torch.cuda.get_device_name(0))
+print("cap:", torch.cuda.get_device_capability(0))
+x = torch.randn(1024, device="cuda")
+print("cuda ok:", x.mean().item())
+PY
+
+
+Then restart your server.
+
+If pip complains it can’t find one of those exact torchvision/torchaudio versions, do this instead (lets pip pick matching builds from the cu128 index):
+
+pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio
+
+
+Either way: get off cu121 and onto cu128 and the sm_120 error goes away. 
+PyTorch
++1
+
+
+
+
+
+
+
+[*] Loading ChatterboxTTS model...
+/root/miniconda3/envs/chatterbox-env/lib/python3.10/site-packages/diffusers/models/lora.py:393: FutureWarning: `LoRACompatibleLinear` is deprecated and will be removed in version 1.0.0. Use of `LoRACompatibleLinear` is deprecated. Please switch to PEFT backend by installing PEFT: `pip install peft`.
+  deprecate("LoRACompatibleLinear", "1.0.0", deprecation_message)
+loaded PerthNet (Implicit) at step 250,000
+[*] Model loaded. Sample rate: 24000
+INFO:     Started server process [3311]
+INFO:     Waiting for application startup.
+[*] Synth worker started (single concurrency).
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+/root/miniconda3/envs/chatterbox-env/lib/python3.10/contextlib.py:103: FutureWarning: `torch.backends.cuda.sdp_kernel()` is deprecated. In the future, this context manager will be removed. Please see `torch.nn.attention.sdpa_kernel()` for the new context manager, with updated signature.
+  self.gen = func(*args, **kwds)
+We detected that you are passing `past_key_values` as a tuple and this is deprecated and will be removed in v4.43. Please use an appropriate `Cache` class (https://huggingface.co/docs/transformers/v4.41.3/en/internal/generation_utils#transformers.Cache)
+LlamaModel is using LlamaSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.
+Sampling:  54%|█████▎    | 535/1000 [00:04<00:03, 130.15it/s]
+[*] Downsampling output from 24000 Hz to 16000 Hz
